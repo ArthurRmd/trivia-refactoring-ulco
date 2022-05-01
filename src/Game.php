@@ -8,10 +8,8 @@ class Game
 {
     private array $players;
     private GameMessagePrinter $messagePrinter;
-    var $popQuestions;
-    var $scienceQuestions;
-    var $sportsQuestions;
-    var $rockQuestions;
+    private QuestionsManager $questionsManager;
+
 
     var $currentPlayer = 0;
     var $isGettingOutOfPenaltyBox;
@@ -21,17 +19,14 @@ class Game
 
         $this->players = [];
         $this->messagePrinter = $messagePrinter;
-        $this->popQuestions = [];
-        $this->scienceQuestions = [];
-        $this->sportsQuestions = [];
-        $this->rockQuestions = [];
 
-        for ($i = 0; $i < 50; $i++) {
-            $this->popQuestions[] = "Pop Question ".$i;
-            $this->scienceQuestions[] = "Science Question ".$i;
-            $this->sportsQuestions[] = "Sports Question ".$i;
-            $this->rockQuestions[] = "Rock Question ".$i;
-        }
+        $this->questionsManager = new QuestionsManager();
+        $this->questionsManager
+            ->addQuestion('Pop')
+            ->addQuestion('Science')
+            ->addQuestion('Sports')
+            ->addQuestion('Rock');
+
     }
 
     function add($playerName):void
