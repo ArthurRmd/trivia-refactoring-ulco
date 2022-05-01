@@ -70,6 +70,11 @@ class Player
         $this->position -= $translation;
     }
 
+    public function addPurse()
+    {
+      $this->purse++;
+    }
+
 
 
 

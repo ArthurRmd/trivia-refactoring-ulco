@@ -127,10 +127,10 @@ class Game
 
             if ($this->isGettingOutOfPenaltyBox) {
                 echoln("Answer was correct!!!!");
-                $this->purses[$this->currentPlayer]++;
+                $this->getCurrentPlayer()->addPurse();
                 echoln($this->getCurrentPlayer()->getName()
                     ." now has "
-                    .$this->purses[$this->currentPlayer]
+                    .$this->getCurrentPlayer()->getPurse()
                     ." Gold Coins.");
 
                 $winner = $this->didPlayerWin();
@@ -152,10 +152,10 @@ class Game
 
 
         echoln("Answer was corrent!!!!");
-        $this->purses[$this->currentPlayer]++;
+        $this->getCurrentPlayer()->addPurse();
         echoln($this->getCurrentPlayer()->getName()
             ." now has "
-            .$this->purses[$this->currentPlayer]
+            .$this->getCurrentPlayer()->getPurse()
             ." Gold Coins.");
 
         $winner = $this->didPlayerWin();
@@ -184,6 +184,6 @@ class Game
 
     function didPlayerWin()
     {
-        return !($this->purses[$this->currentPlayer] == 6);
+        return !($this->getCurrentPlayer()->getPurse() == 6);
     }
 }
