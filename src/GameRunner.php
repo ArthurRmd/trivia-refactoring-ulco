@@ -4,7 +4,7 @@ use Ulco\Game;
 
 require_once(__DIR__.'/../vendor/autoload.php');
 
-$aGame = new Game();
+$aGame = new Game(new \Ulco\GameMessagePrinter());
 
 $aGame->add("Chet");
 $aGame->add("Pat");

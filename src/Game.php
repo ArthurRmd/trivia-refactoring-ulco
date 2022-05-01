@@ -2,15 +2,12 @@
 
 namespace Ulco;
 
-function echoln($string)
-{
-    echo $string."\n";
-}
+use PHPUnit\Util\Exception;
 
 class Game
 {
     private array $players;
-
+    private GameMessagePrinter $messagePrinter;
     var $popQuestions;
     var $scienceQuestions;
     var $sportsQuestions;
@@ -19,11 +16,11 @@ class Game
     var $currentPlayer = 0;
     var $isGettingOutOfPenaltyBox;
 
-    function __construct()
+    function __construct(GameMessagePrinter $messagePrinter)
     {
 
         $this->players = [];
-
+        $this->messagePrinter = $messagePrinter;
         $this->popQuestions = [];
         $this->scienceQuestions = [];
         $this->sportsQuestions = [];
@@ -37,13 +34,10 @@ class Game
         }
     }
 
-    function add($playerName)
+    function add($playerName):void
     {
         $this->players[] = new Player($playerName);
-        echoln($playerName." was added");
-        echoln("They are player number ".count($this->players));
-
-        return true;
+        $this->messagePrinter->playerAdded($playerName, count($this->players));
     }
 
     private function getCurrentPlayer() :Player
@@ -54,26 +48,24 @@ class Game
 
     function roll($roll)
     {
-        echoln($this->getCurrentPlayer()->getName()." is the current player");
-        echoln("They have rolled a ".$roll);
+        $this->messagePrinter->roleDice($this->getCurrentPlayer(), $roll);
 
         if ($this->getCurrentPlayer()->isInPenaltyBox()) {
+
             if ($roll % 2 != 0) {
                 $this->isGettingOutOfPenaltyBox = true;
 
-                echoln($this->getCurrentPlayer()->getName()." is getting out of the penalty box");
+                $this->messagePrinter->gettingOutPenalty($this->getCurrentPlayer());
                 $this->getCurrentPlayer()->moveFoward($roll);
                 if ($this->getCurrentPlayer()->getPosition() > 11) {
                     $this->getCurrentPlayer()->moveBack(12);
                 }
 
-                echoln($this->getCurrentPlayer()->getName()
-                    ."'s new location is "
-                    .$this->getCurrentPlayer()->getPosition());
-                echoln("The category is ".$this->currentCategory());
+                $this->messagePrinter->getNewLocation($this->getCurrentPlayer());
+                $this->messagePrinter->getCategory($this->currentCategory());
                 $this->askQuestion();
             } else {
-                echoln($this->getCurrentPlayer()->getName()." is not getting out of the penalty box");
+                $this->messagePrinter->notGettingOutPenalty($this->getCurrentPlayer());
                 $this->isGettingOutOfPenaltyBox = false;
             }
 
@@ -84,10 +76,8 @@ class Game
                 $this->getCurrentPlayer()->moveBack(12);
             }
 
-            echoln($this->getCurrentPlayer()->getName()
-                ."'s new location is "
-                .$this->getCurrentPlayer()->getPosition());
-            echoln("The category is ".$this->currentCategory());
+            $this->messagePrinter->getNewLocation($this->getCurrentPlayer());
+            $this->messagePrinter->getCategory($this->currentCategory());
             $this->askQuestion();
         }
 
@@ -95,18 +85,15 @@ class Game
 
     function askQuestion()
     {
-        if ($this->currentCategory() === "Pop") {
-            echoln(array_shift($this->popQuestions));
-        }
-        if ($this->currentCategory() === "Science") {
-            echoln(array_shift($this->scienceQuestions));
-        }
-        if ($this->currentCategory() === "Sports") {
-            echoln(array_shift($this->sportsQuestions));
-        }
-        if ($this->currentCategory() === "Rock") {
-            echoln(array_shift($this->rockQuestions));
-        }
+        $questionName = match ($this->currentCategory()) {
+            'Pop' => array_shift($this->popQuestions),
+            'Science' => array_shift($this->scienceQuestions),
+            'Sports' => array_shift($this->sportsQuestions),
+            'Rock' => array_shift($this->rockQuestions),
+            default => throw new Exception('Question not implemented')
+        };
+
+        $this->messagePrinter->questionName($questionName);
     }
 
 
@@ -126,12 +113,8 @@ class Game
         if ($this->getCurrentPlayer()->isInPenaltyBox()) {
 
             if ($this->isGettingOutOfPenaltyBox) {
-                echoln("Answer was correct!!!!");
                 $this->getCurrentPlayer()->addPurse();
-                echoln($this->getCurrentPlayer()->getName()
-                    ." now has "
-                    .$this->getCurrentPlayer()->getPurse()
-                    ." Gold Coins.");
+                $this->messagePrinter->correctAnswer($this->getCurrentPlayer());
 
                 $winner = $this->didPlayerWin();
                 $this->currentPlayer++;
@@ -151,12 +134,8 @@ class Game
         }
 
 
-        echoln("Answer was corrent!!!!");
         $this->getCurrentPlayer()->addPurse();
-        echoln($this->getCurrentPlayer()->getName()
-            ." now has "
-            .$this->getCurrentPlayer()->getPurse()
-            ." Gold Coins.");
+        $this->messagePrinter->incorrectAnswer($this->getCurrentPlayer());
 
         $winner = $this->didPlayerWin();
         $this->currentPlayer++;
@@ -169,8 +148,7 @@ class Game
 
     function wrongAnswer()
     {
-        echoln("Question was incorrectly answered");
-        echoln($this->getCurrentPlayer()->getName()." was sent to the penalty box");
+        $this->messagePrinter->wrongAnswer($this->getCurrentPlayer());
         $this->getCurrentPlayer()->setIsInPenaltyBox(true);
 
         $this->currentPlayer++;
