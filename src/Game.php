@@ -57,19 +57,19 @@ class Game
         echoln($this->getCurrentPlayer()->getName()." is the current player");
         echoln("They have rolled a ".$roll);
 
-        if ($this->inPenaltyBox[$this->currentPlayer]) {
+        if ($this->getCurrentPlayer()->isInPenaltyBox()) {
             if ($roll % 2 != 0) {
                 $this->isGettingOutOfPenaltyBox = true;
 
                 echoln($this->getCurrentPlayer()->getName()." is getting out of the penalty box");
-                $this->places[$this->currentPlayer] += $roll;
-                if ($this->places[$this->currentPlayer] > 11) {
-                    $this->places[$this->currentPlayer] -= 12;
+                $this->getCurrentPlayer()->moveFoward($roll);
+                if ($this->getCurrentPlayer()->getPosition() > 11) {
+                    $this->getCurrentPlayer()->moveBack(12);
                 }
 
                 echoln($this->getCurrentPlayer()->getName()
                     ."'s new location is "
-                    .$this->places[$this->currentPlayer]);
+                    .$this->getCurrentPlayer()->getPosition());
                 echoln("The category is ".$this->currentCategory());
                 $this->askQuestion();
             } else {
@@ -79,14 +79,14 @@ class Game
 
         } else {
 
-            $this->places[$this->currentPlayer] += $roll;
-            if ($this->places[$this->currentPlayer] > 11) {
-                $this->places[$this->currentPlayer] -= 12;
+            $this->getCurrentPlayer()->moveFoward($roll);
+            if ($this->getCurrentPlayer()->getPosition() > 11) {
+                $this->getCurrentPlayer()->moveBack(12);
             }
 
             echoln($this->getCurrentPlayer()->getName()
                 ."'s new location is "
-                .$this->places[$this->currentPlayer]);
+                .$this->getCurrentPlayer()->getPosition());
             echoln("The category is ".$this->currentCategory());
             $this->askQuestion();
         }
@@ -113,7 +113,7 @@ class Game
     function currentCategory()
     {
 
-        return match ($this->places[$this->currentPlayer]) {
+        return match ($this->getCurrentPlayer()->getPosition()) {
             0, 4, 8 => 'Pop',
             1, 5, 9 => 'Science',
             2, 6, 10 => 'Sports',
@@ -123,7 +123,7 @@ class Game
 
     function wasCorrectlyAnswered()
     {
-        if ($this->inPenaltyBox[$this->currentPlayer]) {
+        if ($this->getCurrentPlayer()->isInPenaltyBox()) {
 
             if ($this->isGettingOutOfPenaltyBox) {
                 echoln("Answer was correct!!!!");
@@ -171,7 +171,7 @@ class Game
     {
         echoln("Question was incorrectly answered");
         echoln($this->getCurrentPlayer()->getName()." was sent to the penalty box");
-        $this->inPenaltyBox[$this->currentPlayer] = true;
+        $this->getCurrentPlayer()->setIsInPenaltyBox(true);
 
         $this->currentPlayer++;
         if ($this->currentPlayer == count($this->players)) {

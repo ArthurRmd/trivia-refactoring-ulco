@@ -52,6 +52,25 @@ class Player
         return $this->isInPenaltyBox;
     }
 
+    /**
+     * @param  bool  $isInPenaltyBox
+     */
+    public function setIsInPenaltyBox(bool $isInPenaltyBox): void
+    {
+        $this->isInPenaltyBox = $isInPenaltyBox;
+    }
+
+    public function moveFoward($translation)
+    {
+        $this->position += $translation;
+    }
+
+    public function moveBack($translation)
+    {
+        $this->position -= $translation;
+    }
+
+
 
 
 
