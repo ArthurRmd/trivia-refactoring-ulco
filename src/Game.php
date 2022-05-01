@@ -15,7 +15,6 @@ class Game
 
     function __construct(GameMessagePrinter $messagePrinter)
     {
-
         $this->players = [];
         $this->messagePrinter = $messagePrinter;
 
@@ -25,13 +24,13 @@ class Game
             ->addQuestion('Science')
             ->addQuestion('Sports')
             ->addQuestion('Rock');
-
     }
 
     function add($playerName): void
     {
         $this->players[] = new Player($playerName);
-        $this->messagePrinter->playerAdded($playerName, count($this->players));
+        $this->messagePrinter
+            ->playerAdded($playerName, count($this->players));
     }
 
     private function getCurrentPlayer(): Player
@@ -40,27 +39,27 @@ class Game
     }
 
 
-    function roll($roll)
+    function roll($roll):void
     {
         $this->messagePrinter->roleDice($this->getCurrentPlayer(), $roll);
         $currentPlayer = $this->getCurrentPlayer();
 
-        if ($currentPlayer->isInPenaltyBox()) {
-
-            if ($roll % 2 !== 0) {
-                $this->isGettingOutOfPenaltyBox = true;
-
-                $this->messagePrinter->gettingOutPenalty($currentPlayer);
-                $this->movePlayer($currentPlayer,$roll);
-            } else {
-                $this->messagePrinter->notGettingOutPenalty($currentPlayer);
-                $this->isGettingOutOfPenaltyBox = false;
-            }
+        if (!$currentPlayer->isInPenaltyBox()) {
+            $this->movePlayer($currentPlayer, $roll);
 
             return;
         }
 
-        $this->movePlayer($currentPlayer,$roll);
+        if ($roll % 2 !== 0) {
+            $this->isGettingOutOfPenaltyBox = true;
+            $this->messagePrinter->gettingOutPenalty($currentPlayer);
+            $this->movePlayer($currentPlayer, $roll);
+
+            return;
+        }
+        $this->messagePrinter->notGettingOutPenalty($currentPlayer);
+        $this->isGettingOutOfPenaltyBox = false;
+
 
     }
 
@@ -71,20 +70,13 @@ class Game
             $player->moveBack(12);
         }
         $this->messagePrinter->getNewLocation($player);
-        $this->messagePrinter->getCategory($this->currentCategory());
-        $this->askQuestion();
+
+        $currentCategory = $this->currentCategory();
+        $this->messagePrinter->getCategory($currentCategory);
+        $question = $this->questionsManager->getByQuestionByCategory($currentCategory);
+        $this->messagePrinter->questionName($question);
 
     }
-
-    function askQuestion()
-    {
-        $questionName = $this->questionsManager
-            ->getByCategory($this->currentCategory())
-            ->getLast();
-
-        $this->messagePrinter->questionName($questionName);
-    }
-
 
     function currentCategory()
     {

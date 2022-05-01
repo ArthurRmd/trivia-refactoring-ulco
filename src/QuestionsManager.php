@@ -21,9 +21,10 @@ class QuestionsManager
         return $this;
     }
 
-    public function getByCategory(string $category) :Questions
+    public function getByQuestionByCategory(string $category) :string
     {
-        return $this->getQuestionByCategory($category);
+        return $this->getQuestionByCategory($category)
+            ->getLast();
     }
 
     private function getQuestionByCategory(string $category)
