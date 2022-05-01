@@ -2,102 +2,93 @@
 
 namespace Ulco;
 
-use PHPUnit\Util\Exception;
-
 class Game
 {
+    private const POSITION_CAN_MOVE_BACK = 11;
+    private const NUMBER_POSITION_WHEN_MOVE_BACK = 12;
     private array $players;
-    private GameMessagePrinter $messagePrinter;
-    var $popQuestions;
-    var $scienceQuestions;
-    var $sportsQuestions;
-    var $rockQuestions;
+    private IGameMessagePrinter $messagePrinter;
+    private QuestionsManager $questionsManager;
 
-    var $currentPlayer = 0;
-    var $isGettingOutOfPenaltyBox;
 
-    function __construct(GameMessagePrinter $messagePrinter)
+    public $currentPlayer = 0;
+    public $isGettingOutOfPenaltyBox;
+
+    /**
+     * @param  IGameMessagePrinter  $messagePrinter
+     */
+    public function __construct(IGameMessagePrinter $messagePrinter)
     {
-
         $this->players = [];
         $this->messagePrinter = $messagePrinter;
-        $this->popQuestions = [];
-        $this->scienceQuestions = [];
-        $this->sportsQuestions = [];
-        $this->rockQuestions = [];
 
-        for ($i = 0; $i < 50; $i++) {
-            $this->popQuestions[] = "Pop Question ".$i;
-            $this->scienceQuestions[] = "Science Question ".$i;
-            $this->sportsQuestions[] = "Sports Question ".$i;
-            $this->rockQuestions[] = "Rock Question ".$i;
-        }
+        $this->questionsManager = new QuestionsManager();
+        $this->questionsManager
+            ->addQuestion('Pop')
+            ->addQuestion('Science')
+            ->addQuestion('Sports')
+            ->addQuestion('Rock');
     }
 
-    function add($playerName):void
+    /**
+     * @param $playerName
+     */
+    public function addPlayer($playerName): void
     {
         $this->players[] = new Player($playerName);
-        $this->messagePrinter->playerAdded($playerName, count($this->players));
+        $this->messagePrinter
+            ->playerAdded($playerName, count($this->players));
     }
 
-    private function getCurrentPlayer() :Player
+    /**
+     * @return Player
+     */
+    private function getCurrentPlayer(): Player
     {
         return $this->players[$this->currentPlayer];
     }
 
 
-    function roll($roll)
+    public function roll($roll): void
     {
         $this->messagePrinter->roleDice($this->getCurrentPlayer(), $roll);
+        $currentPlayer = $this->getCurrentPlayer();
 
-        if ($this->getCurrentPlayer()->isInPenaltyBox()) {
+        if (!$currentPlayer->isInPenaltyBox()) {
+            $this->movePlayer($currentPlayer, $roll);
 
-            if ($roll % 2 != 0) {
-                $this->isGettingOutOfPenaltyBox = true;
-
-                $this->messagePrinter->gettingOutPenalty($this->getCurrentPlayer());
-                $this->getCurrentPlayer()->moveFoward($roll);
-                if ($this->getCurrentPlayer()->getPosition() > 11) {
-                    $this->getCurrentPlayer()->moveBack(12);
-                }
-
-                $this->messagePrinter->getNewLocation($this->getCurrentPlayer());
-                $this->messagePrinter->getCategory($this->currentCategory());
-                $this->askQuestion();
-            } else {
-                $this->messagePrinter->notGettingOutPenalty($this->getCurrentPlayer());
-                $this->isGettingOutOfPenaltyBox = false;
-            }
-
-        } else {
-
-            $this->getCurrentPlayer()->moveFoward($roll);
-            if ($this->getCurrentPlayer()->getPosition() > 11) {
-                $this->getCurrentPlayer()->moveBack(12);
-            }
-
-            $this->messagePrinter->getNewLocation($this->getCurrentPlayer());
-            $this->messagePrinter->getCategory($this->currentCategory());
-            $this->askQuestion();
+            return;
         }
 
+        if ($roll % 2 !== 0) {
+            $this->isGettingOutOfPenaltyBox = true;
+            $this->messagePrinter->gettingOutPenalty($currentPlayer);
+            $this->movePlayer($currentPlayer, $roll);
+
+            return;
+        }
+        $this->messagePrinter->notGettingOutPenalty($currentPlayer);
+        $this->isGettingOutOfPenaltyBox = false;
+
+
     }
 
-    function askQuestion()
+    private function movePlayer(Player $player, int $roll)
     {
-        $questionName = match ($this->currentCategory()) {
-            'Pop' => array_shift($this->popQuestions),
-            'Science' => array_shift($this->scienceQuestions),
-            'Sports' => array_shift($this->sportsQuestions),
-            'Rock' => array_shift($this->rockQuestions),
-            default => throw new Exception('Question not implemented')
-        };
+        $player->moveFroward($roll);
+        if ($player->getPosition() > self::POSITION_CAN_MOVE_BACK) {
+            $player->moveBack(self::NUMBER_POSITION_WHEN_MOVE_BACK);
+        }
+        $this->messagePrinter->getNewLocation($player);
 
-        $this->messagePrinter->questionName($questionName);
+        $currentCategory = $this->currentCategory();
+        $this->messagePrinter->getCategory($currentCategory);
+        $question = $this->questionsManager->getByQuestionByCategory($currentCategory);
+        $this->messagePrinter->questionName($question);
+
     }
 
-
-    function currentCategory()
+    private function currentCategory()
     {
 
         return match ($this->getCurrentPlayer()->getPosition()) {
@@ -106,6 +97,14 @@ class Game
             2, 6, 10 => 'Sports',
             default => 'Rock'
         };
+    }
+
+    private function nextRound()
+    {
+        $this->currentPlayer++;
+        if ($this->currentPlayer == count($this->players)) {
+            $this->currentPlayer = 0;
+        }
     }
 
     function wasCorrectlyAnswered()
@@ -117,18 +116,12 @@ class Game
                 $this->messagePrinter->correctAnswer($this->getCurrentPlayer());
 
                 $winner = $this->didPlayerWin();
-                $this->currentPlayer++;
-                if ($this->currentPlayer == count($this->players)) {
-                    $this->currentPlayer = 0;
-                }
+                $this->nextRound();
 
                 return $winner;
             }
 
-            $this->currentPlayer++;
-            if ($this->currentPlayer == count($this->players)) {
-                $this->currentPlayer = 0;
-            }
+            $this->nextRound();
 
             return true;
         }
@@ -138,10 +131,7 @@ class Game
         $this->messagePrinter->incorrectAnswer($this->getCurrentPlayer());
 
         $winner = $this->didPlayerWin();
-        $this->currentPlayer++;
-        if ($this->currentPlayer == count($this->players)) {
-            $this->currentPlayer = 0;
-        }
+        $this->nextRound();
 
         return $winner;
     }
@@ -150,12 +140,7 @@ class Game
     {
         $this->messagePrinter->wrongAnswer($this->getCurrentPlayer());
         $this->getCurrentPlayer()->setIsInPenaltyBox(true);
-
-        $this->currentPlayer++;
-        if ($this->currentPlayer == count($this->players)) {
-            $this->currentPlayer = 0;
-        }
-
+        $this->nextRound();
         return true;
     }
 

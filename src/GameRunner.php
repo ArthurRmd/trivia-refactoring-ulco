@@ -6,9 +6,9 @@ require_once(__DIR__.'/../vendor/autoload.php');
 
 $aGame = new Game(new \Ulco\GameMessagePrinter());
 
-$aGame->add("Chet");
-$aGame->add("Pat");
-$aGame->add("Sue");
+$aGame->addPlayer("Chet");
+$aGame->addPlayer("Pat");
+$aGame->addPlayer("Sue");
 
 
 do {
