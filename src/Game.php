@@ -11,8 +11,8 @@ class Game
     private QuestionsManager $questionsManager;
 
 
-    var $currentPlayer = 0;
-    var $isGettingOutOfPenaltyBox;
+    public $currentPlayer = 0;
+    public $isGettingOutOfPenaltyBox;
 
     function __construct(GameMessagePrinter $messagePrinter)
     {
@@ -29,13 +29,13 @@ class Game
 
     }
 
-    function add($playerName):void
+    function add($playerName): void
     {
         $this->players[] = new Player($playerName);
         $this->messagePrinter->playerAdded($playerName, count($this->players));
     }
 
-    private function getCurrentPlayer() :Player
+    private function getCurrentPlayer(): Player
     {
         return $this->players[$this->currentPlayer];
     }
@@ -80,13 +80,9 @@ class Game
 
     function askQuestion()
     {
-        $questionName = match ($this->currentCategory()) {
-            'Pop' => array_shift($this->popQuestions),
-            'Science' => array_shift($this->scienceQuestions),
-            'Sports' => array_shift($this->sportsQuestions),
-            'Rock' => array_shift($this->rockQuestions),
-            default => throw new Exception('Question not implemented')
-        };
+        $questionName = $this->questionsManager
+            ->getByCategory($this->currentCategory())
+            ->getLast();
 
         $this->messagePrinter->questionName($questionName);
     }

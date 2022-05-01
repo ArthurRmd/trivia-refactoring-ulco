@@ -12,15 +12,15 @@ class Questions
      */
     public function __construct(string $category, int $numberQuestions)
     {
-        $this->$category = $category;
+        $this->category = $category;
         $this->questions = [];
 
         for ($i = 0; $i < $numberQuestions; $i++) {
-            $this->questions[] = $this->$category." Question ".$i;
+            $this->questions[] = $this->category." Question ".$i;
         }
     }
 
-    public function get():string
+    public function getLast():string
     {
         return array_shift($this->questions);
     }
