@@ -20,6 +20,9 @@ class Questions
         }
     }
 
+    /**
+     * @return string
+     */
     public function getLast():string
     {
         return array_shift($this->questions);

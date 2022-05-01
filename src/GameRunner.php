@@ -1,26 +1,22 @@
 <?php
 
 use Ulco\Game;
+use Ulco\GameMessagePrinter;
 
 require_once(__DIR__.'/../vendor/autoload.php');
 
-$aGame = new Game(new \Ulco\GameMessagePrinter());
+$messagePrinter = new GameMessagePrinter();
+$game = new Game($messagePrinter);
 
-$aGame->addPlayer("Chet");
-$aGame->addPlayer("Pat");
-$aGame->addPlayer("Sue");
+$game->addPlayer("Chet")
+    ->addPlayer("Pat")
+    ->addPlayer("Sue");
 
+$gameIsNotFinished = true;
 
-do {
-
-    $aGame->roll(rand(0, 5) + 1);
-
-    if (rand(0, 9) == 7) {
-        $notAWinner = $aGame->wrongAnswer();
-        continue;
-    }
-
-    $notAWinner = $aGame->wasCorrectlyAnswered();
+while ($gameIsNotFinished) {
+    $game->roll();
+    $gameIsNotFinished = $game->runRound();
+}
 
 
-} while ($notAWinner);

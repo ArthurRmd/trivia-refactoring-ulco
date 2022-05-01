@@ -2,17 +2,24 @@
 
 namespace Ulco;
 
+use PHPUnit\Util\Exception;
+
 class Game
 {
     private const POSITION_CAN_MOVE_BACK = 11;
     private const NUMBER_POSITION_WHEN_MOVE_BACK = 12;
+    private const VALUE_QUESTION_IS_CORRECT = 7;
+    private const NUMBER_POSSIBILITY_QUESTION = 9;
+    private const VALUE_PURSE_WHEN_PLAYER__NOT_WIN = 6;
+    private const FIRST_POSITION_PLAYER = 0;
+
     private array $players;
     private IGameMessagePrinter $messagePrinter;
     private QuestionsManager $questionsManager;
+    private Dice $dice;
 
-
-    public $currentPlayer = 0;
-    public $isGettingOutOfPenaltyBox;
+    private int $currentPlayer = 0;
+    private bool $isGettingOutOfPenaltyBox;
 
     /**
      * @param  IGameMessagePrinter  $messagePrinter
@@ -21,7 +28,7 @@ class Game
     {
         $this->players = [];
         $this->messagePrinter = $messagePrinter;
-
+        $this->dice = new Dice();
         $this->questionsManager = new QuestionsManager();
         $this->questionsManager
             ->addQuestion('Pop')
@@ -30,14 +37,18 @@ class Game
             ->addQuestion('Rock');
     }
 
+
     /**
      * @param $playerName
+     * @return $this
      */
-    public function addPlayer($playerName): void
+    public function addPlayer($playerName): self
     {
         $this->players[] = new Player($playerName);
         $this->messagePrinter
             ->playerAdded($playerName, count($this->players));
+
+        return $this;
     }
 
     /**
@@ -45,35 +56,41 @@ class Game
      */
     private function getCurrentPlayer(): Player
     {
-        return $this->players[$this->currentPlayer];
+        if(isset($this->players[$this->currentPlayer])) {
+            return $this->players[$this->currentPlayer];
+        }
+        throw new Exception('Player is not set');
     }
 
-
-    public function roll($roll): void
+    public function roll(): void
     {
-        $this->messagePrinter->roleDice($this->getCurrentPlayer(), $roll);
+        $this->dice->roll();
+
+        $this->messagePrinter->roleDice($this->getCurrentPlayer(), $this->dice->getValue());
         $currentPlayer = $this->getCurrentPlayer();
 
         if (!$currentPlayer->isInPenaltyBox()) {
-            $this->movePlayer($currentPlayer, $roll);
+            $this->movePlayer($currentPlayer, $this->dice->getValue());
 
             return;
         }
 
-        if ($roll % 2 !== 0) {
+        if ($this->dice->valueIsEven()) {
             $this->isGettingOutOfPenaltyBox = true;
             $this->messagePrinter->gettingOutPenalty($currentPlayer);
-            $this->movePlayer($currentPlayer, $roll);
+            $this->movePlayer($currentPlayer, $this->dice->getValue());
 
             return;
         }
         $this->messagePrinter->notGettingOutPenalty($currentPlayer);
         $this->isGettingOutOfPenaltyBox = false;
-
-
     }
 
-    private function movePlayer(Player $player, int $roll)
+    /**
+     * @param  Player  $player
+     * @param  int  $roll
+     */
+    private function movePlayer(Player $player, int $roll): void
     {
         $player->moveFroward($roll);
         if ($player->getPosition() > self::POSITION_CAN_MOVE_BACK) {
@@ -88,7 +105,10 @@ class Game
 
     }
 
-    private function currentCategory()
+    /**
+     * @return string
+     */
+    private function currentCategory(): string
     {
 
         return match ($this->getCurrentPlayer()->getPosition()) {
@@ -99,22 +119,21 @@ class Game
         };
     }
 
-    private function nextRound()
+    private function nextRound(): void
     {
         $this->currentPlayer++;
-        if ($this->currentPlayer == count($this->players)) {
-            $this->currentPlayer = 0;
+        if ($this->currentPlayer === count($this->players)) {
+            $this->currentPlayer = self::FIRST_POSITION_PLAYER;
         }
     }
 
-    function wasCorrectlyAnswered()
+    public function wasCorrectlyAnswered(): bool
     {
         if ($this->getCurrentPlayer()->isInPenaltyBox()) {
 
             if ($this->isGettingOutOfPenaltyBox) {
                 $this->getCurrentPlayer()->addPurse();
                 $this->messagePrinter->correctAnswer($this->getCurrentPlayer());
-
                 $winner = $this->didPlayerWin();
                 $this->nextRound();
 
@@ -136,17 +155,27 @@ class Game
         return $winner;
     }
 
-    function wrongAnswer()
+    public function wrongAnswer(): bool
     {
         $this->messagePrinter->wrongAnswer($this->getCurrentPlayer());
         $this->getCurrentPlayer()->setIsInPenaltyBox(true);
         $this->nextRound();
+
         return true;
     }
 
 
-    function didPlayerWin()
+    private function didPlayerWin(): bool
     {
-        return !($this->getCurrentPlayer()->getPurse() == 6);
+        return $this->getCurrentPlayer()->getPurse() !== self::VALUE_PURSE_WHEN_PLAYER__NOT_WIN;
+    }
+
+    public function runRound(): bool
+    {
+        if (rand(0, self::NUMBER_POSSIBILITY_QUESTION) === self::VALUE_QUESTION_IS_CORRECT) {
+            return $this->wrongAnswer();
+        }
+
+        return $this->wasCorrectlyAnswered();
     }
 }

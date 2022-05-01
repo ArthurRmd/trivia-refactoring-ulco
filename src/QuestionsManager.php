@@ -15,19 +15,31 @@ class QuestionsManager
         $this->listQuestions = [];
     }
 
-    public function addQuestion(string $category)
+    /**
+     * @param  string  $category
+     * @return $this
+     */
+    public function addQuestion(string $category): static
     {
         $this->listQuestions[] = new Questions($category, 50);
         return $this;
     }
 
+    /**
+     * @param  string  $category
+     * @return string
+     */
     public function getByQuestionByCategory(string $category) :string
     {
         return $this->getQuestionByCategory($category)
             ->getLast();
     }
 
-    private function getQuestionByCategory(string $category)
+    /**
+     * @param  string  $category
+     * @return mixed
+     */
+    private function getQuestionByCategory(string $category): mixed
     {
         /** @var Questions $question */
         foreach ($this->listQuestions as $questions) {
