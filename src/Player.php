@@ -20,5 +20,39 @@ class Player
         $this->isInPenaltyBox = false;
     }
 
+    /**
+     * @return string
+     */
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPosition(): int
+    {
+        return $this->position;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPurse(): int
+    {
+        return $this->purse;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isInPenaltyBox(): bool
+    {
+        return $this->isInPenaltyBox;
+    }
+
+
+
 
 }

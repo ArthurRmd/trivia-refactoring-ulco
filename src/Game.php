@@ -46,33 +46,34 @@ class Game
         return true;
     }
 
-    function howManyPlayers()
+    private function getCurrentPlayer() :Player
     {
-        return count($this->players);
+        return $this->players[$this->currentPlayer];
     }
+
 
     function roll($roll)
     {
-        echoln($this->players[$this->currentPlayer]." is the current player");
+        echoln($this->getCurrentPlayer()->getName()." is the current player");
         echoln("They have rolled a ".$roll);
 
         if ($this->inPenaltyBox[$this->currentPlayer]) {
             if ($roll % 2 != 0) {
                 $this->isGettingOutOfPenaltyBox = true;
 
-                echoln($this->players[$this->currentPlayer]." is getting out of the penalty box");
+                echoln($this->getCurrentPlayer()->getName()." is getting out of the penalty box");
                 $this->places[$this->currentPlayer] += $roll;
                 if ($this->places[$this->currentPlayer] > 11) {
                     $this->places[$this->currentPlayer] -= 12;
                 }
 
-                echoln($this->players[$this->currentPlayer]
+                echoln($this->getCurrentPlayer()->getName()
                     ."'s new location is "
                     .$this->places[$this->currentPlayer]);
                 echoln("The category is ".$this->currentCategory());
                 $this->askQuestion();
             } else {
-                echoln($this->players[$this->currentPlayer]." is not getting out of the penalty box");
+                echoln($this->getCurrentPlayer()->getName()." is not getting out of the penalty box");
                 $this->isGettingOutOfPenaltyBox = false;
             }
 
@@ -83,7 +84,7 @@ class Game
                 $this->places[$this->currentPlayer] -= 12;
             }
 
-            echoln($this->players[$this->currentPlayer]
+            echoln($this->getCurrentPlayer()->getName()
                 ."'s new location is "
                 .$this->places[$this->currentPlayer]);
             echoln("The category is ".$this->currentCategory());
@@ -127,7 +128,7 @@ class Game
             if ($this->isGettingOutOfPenaltyBox) {
                 echoln("Answer was correct!!!!");
                 $this->purses[$this->currentPlayer]++;
-                echoln($this->players[$this->currentPlayer]
+                echoln($this->getCurrentPlayer()->getName()
                     ." now has "
                     .$this->purses[$this->currentPlayer]
                     ." Gold Coins.");
@@ -152,7 +153,7 @@ class Game
 
         echoln("Answer was corrent!!!!");
         $this->purses[$this->currentPlayer]++;
-        echoln($this->players[$this->currentPlayer]
+        echoln($this->getCurrentPlayer()->getName()
             ." now has "
             .$this->purses[$this->currentPlayer]
             ." Gold Coins.");
@@ -169,7 +170,7 @@ class Game
     function wrongAnswer()
     {
         echoln("Question was incorrectly answered");
-        echoln($this->players[$this->currentPlayer]." was sent to the penalty box");
+        echoln($this->getCurrentPlayer()->getName()." was sent to the penalty box");
         $this->inPenaltyBox[$this->currentPlayer] = true;
 
         $this->currentPlayer++;
