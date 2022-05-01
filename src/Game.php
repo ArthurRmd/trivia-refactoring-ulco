@@ -9,10 +9,7 @@ function echoln($string)
 
 class Game
 {
-    var $players;
-    var $places;
-    var $purses;
-    var $inPenaltyBox;
+    private array $players;
 
     var $popQuestions;
     var $scienceQuestions;
@@ -26,9 +23,6 @@ class Game
     {
 
         $this->players = [];
-        $this->places = array(0);
-        $this->purses = array(0);
-        $this->inPenaltyBox = array(0);
 
         $this->popQuestions = [];
         $this->scienceQuestions = [];
@@ -39,17 +33,13 @@ class Game
             $this->popQuestions[] = "Pop Question ".$i;
             $this->scienceQuestions[] = "Science Question ".$i;
             $this->sportsQuestions[] = "Sports Question ".$i;
-            $this->rockQuestions[] = "Rock Question " .$i;
+            $this->rockQuestions[] = "Rock Question ".$i;
         }
     }
 
     function add($playerName)
     {
-        $this->players[] = $playerName;
-        $this->places[$this->howManyPlayers()] = 0;
-        $this->purses[$this->howManyPlayers()] = 0;
-        $this->inPenaltyBox[$this->howManyPlayers()] = false;
-
+        $this->players[] = new Player($playerName);
         echoln($playerName." was added");
         echoln("They are player number ".count($this->players));
 
