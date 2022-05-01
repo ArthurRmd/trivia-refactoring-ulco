@@ -5,15 +5,19 @@ namespace Ulco;
 class Game
 {
     private const POSITION_CAN_MOVE_BACK = 11;
+    private const NUMBER_POSITION_WHEN_MOVE_BACK = 12;
     private array $players;
-    private GameMessagePrinter $messagePrinter;
+    private IGameMessagePrinter $messagePrinter;
     private QuestionsManager $questionsManager;
 
 
     public $currentPlayer = 0;
     public $isGettingOutOfPenaltyBox;
 
-    function __construct(GameMessagePrinter $messagePrinter)
+    /**
+     * @param  IGameMessagePrinter  $messagePrinter
+     */
+    public function __construct(IGameMessagePrinter $messagePrinter)
     {
         $this->players = [];
         $this->messagePrinter = $messagePrinter;
@@ -26,20 +30,26 @@ class Game
             ->addQuestion('Rock');
     }
 
-    function add($playerName): void
+    /**
+     * @param $playerName
+     */
+    public function addPlayer($playerName): void
     {
         $this->players[] = new Player($playerName);
         $this->messagePrinter
             ->playerAdded($playerName, count($this->players));
     }
 
+    /**
+     * @return Player
+     */
     private function getCurrentPlayer(): Player
     {
         return $this->players[$this->currentPlayer];
     }
 
 
-    function roll($roll):void
+    public function roll($roll): void
     {
         $this->messagePrinter->roleDice($this->getCurrentPlayer(), $roll);
         $currentPlayer = $this->getCurrentPlayer();
@@ -65,9 +75,9 @@ class Game
 
     private function movePlayer(Player $player, int $roll)
     {
-        $player->moveFoward($roll);
+        $player->moveFroward($roll);
         if ($player->getPosition() > self::POSITION_CAN_MOVE_BACK) {
-            $player->moveBack(12);
+            $player->moveBack(self::NUMBER_POSITION_WHEN_MOVE_BACK);
         }
         $this->messagePrinter->getNewLocation($player);
 
@@ -78,7 +88,7 @@ class Game
 
     }
 
-    function currentCategory()
+    private function currentCategory()
     {
 
         return match ($this->getCurrentPlayer()->getPosition()) {
@@ -87,6 +97,14 @@ class Game
             2, 6, 10 => 'Sports',
             default => 'Rock'
         };
+    }
+
+    private function nextRound()
+    {
+        $this->currentPlayer++;
+        if ($this->currentPlayer == count($this->players)) {
+            $this->currentPlayer = 0;
+        }
     }
 
     function wasCorrectlyAnswered()
@@ -98,18 +116,12 @@ class Game
                 $this->messagePrinter->correctAnswer($this->getCurrentPlayer());
 
                 $winner = $this->didPlayerWin();
-                $this->currentPlayer++;
-                if ($this->currentPlayer == count($this->players)) {
-                    $this->currentPlayer = 0;
-                }
+                $this->nextRound();
 
                 return $winner;
             }
 
-            $this->currentPlayer++;
-            if ($this->currentPlayer == count($this->players)) {
-                $this->currentPlayer = 0;
-            }
+            $this->nextRound();
 
             return true;
         }
@@ -119,10 +131,7 @@ class Game
         $this->messagePrinter->incorrectAnswer($this->getCurrentPlayer());
 
         $winner = $this->didPlayerWin();
-        $this->currentPlayer++;
-        if ($this->currentPlayer == count($this->players)) {
-            $this->currentPlayer = 0;
-        }
+        $this->nextRound();
 
         return $winner;
     }
@@ -131,12 +140,7 @@ class Game
     {
         $this->messagePrinter->wrongAnswer($this->getCurrentPlayer());
         $this->getCurrentPlayer()->setIsInPenaltyBox(true);
-
-        $this->currentPlayer++;
-        if ($this->currentPlayer == count($this->players)) {
-            $this->currentPlayer = 0;
-        }
-
+        $this->nextRound();
         return true;
     }
 

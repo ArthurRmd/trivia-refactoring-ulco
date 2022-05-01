@@ -60,17 +60,23 @@ class Player
         $this->isInPenaltyBox = $isInPenaltyBox;
     }
 
-    public function moveFoward($translation)
+    /**
+     * @param $translation
+     */
+    public function moveFroward($translation): void
     {
         $this->position += $translation;
     }
 
-    public function moveBack($translation)
+    /**
+     * @param $translation
+     */
+    public function moveBack($translation): void
     {
         $this->position -= $translation;
     }
 
-    public function addPurse()
+    public function addPurse(): void
     {
       $this->purse++;
     }
