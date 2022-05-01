@@ -2,10 +2,9 @@
 
 namespace Ulco;
 
-use PHPUnit\Util\Exception;
-
 class Game
 {
+    private const POSITION_CAN_MOVE_BACK = 11;
     private array $players;
     private GameMessagePrinter $messagePrinter;
     private QuestionsManager $questionsManager;
@@ -44,37 +43,36 @@ class Game
     function roll($roll)
     {
         $this->messagePrinter->roleDice($this->getCurrentPlayer(), $roll);
+        $currentPlayer = $this->getCurrentPlayer();
 
-        if ($this->getCurrentPlayer()->isInPenaltyBox()) {
+        if ($currentPlayer->isInPenaltyBox()) {
 
-            if ($roll % 2 != 0) {
+            if ($roll % 2 !== 0) {
                 $this->isGettingOutOfPenaltyBox = true;
 
-                $this->messagePrinter->gettingOutPenalty($this->getCurrentPlayer());
-                $this->getCurrentPlayer()->moveFoward($roll);
-                if ($this->getCurrentPlayer()->getPosition() > 11) {
-                    $this->getCurrentPlayer()->moveBack(12);
-                }
-
-                $this->messagePrinter->getNewLocation($this->getCurrentPlayer());
-                $this->messagePrinter->getCategory($this->currentCategory());
-                $this->askQuestion();
+                $this->messagePrinter->gettingOutPenalty($currentPlayer);
+                $this->movePlayer($currentPlayer,$roll);
             } else {
-                $this->messagePrinter->notGettingOutPenalty($this->getCurrentPlayer());
+                $this->messagePrinter->notGettingOutPenalty($currentPlayer);
                 $this->isGettingOutOfPenaltyBox = false;
             }
 
-        } else {
-
-            $this->getCurrentPlayer()->moveFoward($roll);
-            if ($this->getCurrentPlayer()->getPosition() > 11) {
-                $this->getCurrentPlayer()->moveBack(12);
-            }
-
-            $this->messagePrinter->getNewLocation($this->getCurrentPlayer());
-            $this->messagePrinter->getCategory($this->currentCategory());
-            $this->askQuestion();
+            return;
         }
+
+        $this->movePlayer($currentPlayer,$roll);
+
+    }
+
+    private function movePlayer(Player $player, int $roll)
+    {
+        $player->moveFoward($roll);
+        if ($player->getPosition() > self::POSITION_CAN_MOVE_BACK) {
+            $player->moveBack(12);
+        }
+        $this->messagePrinter->getNewLocation($player);
+        $this->messagePrinter->getCategory($this->currentCategory());
+        $this->askQuestion();
 
     }
 
