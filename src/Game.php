@@ -10,7 +10,7 @@ function echoln($string)
 class Game
 {
     private array $players;
-
+    private GameMessagePrinter $messagePrinter;
     var $popQuestions;
     var $scienceQuestions;
     var $sportsQuestions;
@@ -19,11 +19,11 @@ class Game
     var $currentPlayer = 0;
     var $isGettingOutOfPenaltyBox;
 
-    function __construct()
+    function __construct(GameMessagePrinter $messagePrinter)
     {
 
         $this->players = [];
-
+        $this->messagePrinter = $messagePrinter;
         $this->popQuestions = [];
         $this->scienceQuestions = [];
         $this->sportsQuestions = [];
@@ -128,10 +128,7 @@ class Game
             if ($this->isGettingOutOfPenaltyBox) {
                 echoln("Answer was correct!!!!");
                 $this->getCurrentPlayer()->addPurse();
-                echoln($this->getCurrentPlayer()->getName()
-                    ." now has "
-                    .$this->getCurrentPlayer()->getPurse()
-                    ." Gold Coins.");
+                $this->messagePrinter->correctAnswer($this->getCurrentPlayer());
 
                 $winner = $this->didPlayerWin();
                 $this->currentPlayer++;
@@ -153,10 +150,7 @@ class Game
 
         echoln("Answer was corrent!!!!");
         $this->getCurrentPlayer()->addPurse();
-        echoln($this->getCurrentPlayer()->getName()
-            ." now has "
-            .$this->getCurrentPlayer()->getPurse()
-            ." Gold Coins.");
+        $this->messagePrinter->correctAnswer($this->getCurrentPlayer());
 
         $winner = $this->didPlayerWin();
         $this->currentPlayer++;
